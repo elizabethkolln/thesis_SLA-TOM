@@ -145,34 +145,50 @@ SLA_final <- SLA_cleaned %>%
                names_to = "SLA_Type",
                values_to = "SLA_Score")
 
-#convert to numeric to avoid issues with the model later
-SLA_final$SLA_Score <- as.numeric(SLA_final$SLA_Score)
-SLA_final$SLA_Setting <- as.numeric(SLA_final$SLA_Setting)
-
 #separating SLA_type from SLA_setting
 SLA_final$SLA_Setting <- gsub("[a-zA-Z]", "", SLA_final$SLA_Type)
 SLA_final$SLA_Type <- gsub("[0-9]", "", SLA_final$SLA_Type)
 
+#convert to numeric to avoid issues with the model later
+SLA_final$SLA_Score <- as.numeric(SLA_final$SLA_Score)
+SLA_final$SLA_Setting <- as.numeric(SLA_final$SLA_Setting)
+
 View(SLA_final)
 
 ###importing the EF and PVT data###
-EF_PVT_data <- read.csv("EF_Vocab_sample_data.csv")
+EF_PVT_data <- read.csv("CSC_OM_EF_PVT.csv")
 
 View(EF_PVT_data)
+
+#fixing incorrect ID
+EF_PVT_data[EF_PVT_data$PID==1025, "PID"] <- 1043
+EF_PVT_data[EF_PVT_data$PID=="1025-", "PID"] <- 1025
 
 #eliminating unnecessary information
 EF_PVT_data_cleaned <- select(EF_PVT_data, 
                               ID = PID,
                               PVT = Theta,
                               EF = ComputedScore)
+
+#making sure it still includes participants who did not complete EF
+EF_PVT_data_cleaned <- EF_PVT_data_cleaned %>%
+  mutate(EF = ifelse(is.na(PVT) & is.na(EF), "null", EF))
+
+View(EF_PVT_data_cleaned)
+
+#combining information
 EF_PVT_data_cleaned <- EF_PVT_data_cleaned %>%
   group_by(ID) %>%
   summarize_all(na.omit)
 
+#resetting the participants who did not complete EF to NA
+EF_PVT_data_cleaned <- EF_PVT_data_cleaned %>%
+  mutate(EF = ifelse(EF == "null", NA, EF))
+
 View(EF_PVT_data_cleaned)
 
 #adding ages to IDs
-ID_ages <- read.csv("ID_ages_samples.csv")
+ID_ages <- read.csv("CSC_OM_Ages.csv")
 
 #merging the data
 data_all <- merge(EF_PVT_data_cleaned, SLA_final, by = "ID", all.x = TRUE)
@@ -190,6 +206,7 @@ model1 <- glmer(SLA_Score ~ SLA_Type * Age_Mo
                 data = data_all,
                 control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
+tab_model(model1)
 
 
 
