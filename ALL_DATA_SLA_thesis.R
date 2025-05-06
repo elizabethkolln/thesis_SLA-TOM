@@ -1,6 +1,7 @@
 #Authors: Elizabeth Kolln
-#Last edited by: Elizabeth Kolln 04/10/2025
+#Last edited by: Elizabeth Kolln 05/06/2025
 
+####Installing packages
 #install.packages("tidyverse")
 #install.packages("dplyr")
 #install.packages("readr")
@@ -13,6 +14,7 @@
 #install.packages("cowplot")
 #install.packages("psych")
 
+####Calling packages
 library(tidyverse)
 library(dplyr)
 library(readr)
@@ -25,6 +27,7 @@ library(wesanderson)
 library(cowplot)
 library(psych)
 
+####Make sure working directory is correct
 setwd("~/Desktop/wellesley/thesis/final_data/ALL_DATA")
 
 ###importing the TOM data###
@@ -55,6 +58,7 @@ TOM_cleaned <- TOM_cleaned[-c(1:2) , ]
 
 View(TOM_cleaned)
 
+##Scoring TOM, based on Jaime's code from github
 #scoring DD
 TOM_cleaned$DD <- ifelse(TOM_cleaned$DDS2_OD != TOM_cleaned$DDS2_TQ | 
                            TOM_cleaned$DDS7_OD != TOM_cleaned$DDS7_TQ | 
@@ -90,7 +94,7 @@ TOM_cleaned$RAE <- ifelse(TOM_cleaned$RAES1_TFQ < TOM_cleaned$RAES1_TLQ |
                           1, 0)
 TOM_cleaned$RAE <- ifelse(is.na(TOM_cleaned$RAE), 0, 1)
 
-#final data frame
+##final data frame of all TOM data
 TOM_final <- select(TOM_cleaned, 
                     ID,
                     TOM_DD = DD,
@@ -197,9 +201,11 @@ EF_PVT_data_cleaned <- EF_PVT_data_cleaned %>%
 
 View(EF_PVT_data_cleaned)
 
+##Adding in demographics
 #adding ages to IDs
 ID_ages <- read.csv("ALL_ages.csv")
 
+##Merging data grames
 #merging the data
 data_all <- merge(EF_PVT_data_cleaned, SLA_final, by = "ID", all.x = TRUE)
 data_all <- merge(data_all, TOM_final, by = "ID", all.x = TRUE)
@@ -222,20 +228,20 @@ df_graph1 <- select(SLA_cleaned,
                     SLA_Sum)
 
 df_graph1$Infant <- (as.integer(SLA_cleaned$IDS1)
-                  + as.integer(SLA_cleaned$IDS2)
-                  + as.integer(SLA_cleaned$IDS3))
+                     + as.integer(SLA_cleaned$IDS2)
+                     + as.integer(SLA_cleaned$IDS3))
 
 df_graph1$Adult <- (as.integer(SLA_cleaned$ADS1)
-                  + as.integer(SLA_cleaned$ADS2)
-                  + as.integer(SLA_cleaned$ADS3))
+                    + as.integer(SLA_cleaned$ADS2)
+                    + as.integer(SLA_cleaned$ADS3))
 
 df_graph1$Peer <- (as.integer(SLA_cleaned$PDS1)
-                  + as.integer(SLA_cleaned$PDS2)
-                  + as.integer(SLA_cleaned$PDS3))
+                   + as.integer(SLA_cleaned$PDS2)
+                   + as.integer(SLA_cleaned$PDS3))
 
 df_graph1$Foreign <- (as.integer(SLA_cleaned$FDS1)
-                  + as.integer(SLA_cleaned$FDS2)
-                  + as.integer(SLA_cleaned$FDS3))
+                      + as.integer(SLA_cleaned$FDS2)
+                      + as.integer(SLA_cleaned$FDS3))
 
 df_graph1 <- merge(EF_PVT_data_cleaned, df_graph1, by = "ID")
 df_graph1 <- merge(df_graph1, TOM_final, by = "ID")
@@ -246,11 +252,21 @@ df_graph1 <- subset(df_graph1, ID != 7006)
 
 View(df_graph1)
 
+#age visualizations
+ggplot(df_graph1, aes(x=Age_Mo)) +
+  geom_bar(fill = "#ea5458")
+
+ggplot(df_graph1, aes(x=Age_Yr)) +
+  geom_bar(fill = "#ea5458") +
+  ylab("Count") +
+  xlab("Age in Years")
+
 #turning into an excel for show my data
 write_xlsx(df_graph1, "df_graph1.xlsx")
 
-#SLA visualizations only
+####SLA visualizations only
 
+#Making the data frame
 df_graph_SLA1 <- select(df_graph1,
                        ID,
                        Infant,
@@ -268,7 +284,7 @@ df_graph_SLA2 <- pivot_longer(df_graph_SLA1, c(Infant, Adult, Peer, Foreign),
 
 View(df_graph_SLA2)
 
-#visualize
+##visualize
 #passing each register based on age
 df_graph_SLA2$Type <- factor(df_graph_SLA2$Type, levels = c("Foreign", "Infant", "Peer", "Adult"))
 
@@ -281,15 +297,6 @@ ggplot(df_graph_SLA2, aes(x=Age_Mo, y=Score, color=Type)) +
   xlab("Age in months") +
   labs(color = "Register") +
   theme(text=element_text(size=14,  family="Arial"))
-
-#age distributions
-ggplot(df_graph1, aes(x=Age_Mo)) +
-  geom_bar(fill = "#ea5458")
-
-ggplot(df_graph1, aes(x=Age_Yr)) +
-  geom_bar(fill = "#ea5458") +
-  ylab("Count") +
-  xlab("Age in Years")
 
 #Wagner-like visualizations
 #Box plot, NOTE: Issues of IQRs being funky because not enough data
@@ -307,7 +314,7 @@ ggplot(df_graph_SLA2, aes(x = Type, y = Proportion_correct, color = Age_Yr)) +
   xlab("Register") +
   labs(color = "Age (years)")
 
-#WORK IN PROGRESS
+#WORK IN PROGRESS bar plot to show differences in age groups by register
 ggplot(df_graph_SLA2, aes(x = Type, y = Proportion_correct, fill = Age_Yr)) +
   geom_col(position = "dodge") +
   ylim(0, 1) +
