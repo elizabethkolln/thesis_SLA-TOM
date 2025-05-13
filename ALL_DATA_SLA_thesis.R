@@ -1150,3 +1150,23 @@ tab_model(modelRAE)
 
 anova(model1.2, modelRAE) #compare with best model in case the AIC is lower
 
+#Looking at learning effects
+#Model but factors in SLA setting because that's the order the trials were in
+modelLearning1 <- glmer(SLA_Score ~ Age_Mo + SLA_Setting
+                  + (1|ID), 
+                  family = "binomial",
+                  data = data_all,
+                  control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+tab_model(modelLearning1)
+
+modelLearning2 <- glmer(SLA_Score ~ Age_Mo + TOM_sum + SLA_Setting
+                  + (1|ID), 
+                  family = "binomial",
+                  data = data_all,
+                  control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+tab_model(modelLearning2)
+
+anova(model1.2, modelLearning2) #compare with best model in case the AIC is lower
+
